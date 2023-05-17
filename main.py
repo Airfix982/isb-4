@@ -1,31 +1,46 @@
 import hashlib
 import multiprocessing as mp
 import time
-import argparse
 import logging
 from functools import partial
+import argparse
+import json
+import os
+from tqdm import tqdm
 
-from additional_funcs import checking_hash
-from additional_funcs import luhn
-
-initial = {"hash": "cb28fea647fab039e21aedf9762c895f6514d70ae404d5eac3c2b1da26547745", 
-"first_digits": ["519747","537643","548601","548655","552186","555156","555947","514055","531237","558334","541190","545036","547450"],
-"last_digits": "5623"}
-
-def searching():
-    ok = 0
-    cores = mp.cpu_count()
-    with mp.Pool(processes=cores) as p:
-        for bin in initial['first_digits']:
-            for result in p.map(partial(checking_hash, int(bin)), range(100000, 1000000)):
-                    if result:
-                        p.terminate()
-                        ok = 1
-                        print(f'we have found {result} and have terminated pool')
-                        break
-            if ok == 1:
-                 break
+from some_funcs import checking_hash
+from some_funcs import luhn
+from some_funcs import searching
 
 
 if __name__ == '__main__':
-    searching()
+    logging.basicConfig(level=logging.INFO)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i','--init_path',default='files\\init.json',help='Путь к json файлу с данными, default = files\\settings.json', action='store') 
+    group = parser.add_mutually_exclusive_group(required = True)
+    group.add_argument('-f','--find',help='Поиск номеров карт с заданным хэшем', action='store_true')
+    group.add_argument('-c','--check',help='Проверяет карту на достоверность', action='store_true')
+    group.add_argument('-s','--statistic',help='Вывод зависимости времени выполненя от кол-ва потоков', action='store_true')  
+    args = parser.parse_args()
+    init_path = args.init_path
+    try:
+        with open(init_path) as jf:
+            init = json.load(jf)
+    except FileNotFoundError:
+        logging.error(f"{init_path} not found")
+
+    mode = (args.find, args.check, args.statistic)
+
+    match mode:
+        case (True, False, False):
+                logging.info('Поиск номера карточки\n')
+                searching(init)
+        case (False, True, False):
+                logging.info('Проверка корректности карточки')
+                luhn(init)
+        case (False, False, True):
+            with tqdm(total=2) as pbar:
+                logging.info('Сбор данных\n')
+                #statistic(init, pbar)
+        case _:
+            logging.error("wrong mode")
