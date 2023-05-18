@@ -1,14 +1,9 @@
-import hashlib
 import multiprocessing as mp
-import time
 import logging
-from functools import partial
 import argparse
 import json
-import os
-from tqdm import tqdm
 
-from some_funcs import checking_hash
+from some_funcs import save_stat
 from some_funcs import luhn
 from some_funcs import searching
 
@@ -34,13 +29,12 @@ if __name__ == '__main__':
     match mode:
         case (True, False, False):
                 logging.info('Поиск номера карточки\n')
-                searching(init)
+                searching(init, mp.cpu_count())
         case (False, True, False):
-                logging.info('Проверка корректности карточки')
+                logging.info('Проверка корректности карточки...')
                 luhn(init)
         case (False, False, True):
-            with tqdm(total=2) as pbar:
-                logging.info('Сбор данных\n')
-                #statistic(init, pbar)
+                logging.info('Сбор данных...\n')
+                save_stat(init)
         case _:
             logging.error("wrong mode")

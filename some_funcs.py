@@ -3,8 +3,9 @@ import json
 import logging
 import multiprocessing as mp
 from functools import partial
-import time
+from time import time
 from tqdm import tqdm
+from matplotlib import pyplot as plt
 
 
 def luhn(init: dict)->bool:
@@ -55,24 +56,23 @@ def checking_hash(bin: int, init: dict, number: int)->int:
     return int(f'{bin}{number}{init["last_digits"]}') if hashlib.sha3_256(f'{bin}{number}{init["last_digits"]}'.encode()).hexdigest() == f'{init["hash"]}' else False
 
 
-def searching(init: dict):
+def searching(init: dict, processes: int):
     """
     Ищет карту с таким же хэшем
 
     args:
         init(dict): входные данные
-    
+        processes(int): количесто процессов
     """
     ok = 0
-    cores = mp.cpu_count()
-    with mp.Pool(processes=cores) as p:
+    with mp.Pool(processes) as p:
         for bin in init['first_digits']:
             logging.info(f'Подбор хэша для карт {bin}XXXXXX{init["last_digits"]}')
             for result in p.map(partial(checking_hash, int(bin), init), tqdm(range(100000, 1000000), colour='#004158') ):
                     if result:
                         p.terminate()
                         ok = 1
-                        print(f'Найденная карта лежит по пути {init["found_card"]}')
+                        logging.info(f'Найденная карта лежит по пути {init["found_card"]}')
                         try:
                             with open(init["found_card"], 'w') as f:
                                     json.dump(result, f)
@@ -81,3 +81,23 @@ def searching(init: dict):
                         break
             if ok == 1:
                  break
+            
+def save_stat(init: dict):
+    """
+    Сохраняет зависимость времени поиска коллизии хэша от кол-ва процессов
+    args:
+        init(dict): входные данные
+    """
+    times = []
+    for i in range(mp.cpu_count()):
+            start = time()
+            logging.info(f'{i+1} процессa\n')
+            searching(init, i+1)
+            times.append(time()-start)
+    fig=plt.figure(figsize=(30, 5))
+    plt.ylabel('Время')
+    plt.xlabel('процессы')
+    plt.title('зависимость времени от кол-ва процессов')
+    plt.plot(list(x+1 for x in range(4)),times, color='#004158') 
+    plt.savefig(f'{init["stat_path"]}')
+    logging.info(f'Зависимость времени от процессов сохранена по пути {init["stat_path"]}\n')
