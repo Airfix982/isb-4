@@ -24,7 +24,6 @@ def luhn(init: dict)->bool:
     except FileNotFoundError:
           logging.error(f"{init['found_card']} not found")
     number = str(data["card_number"])
-    print(number)
     number = list(map(int, number))
     last = number[15]
     number.pop()
@@ -36,13 +35,13 @@ def luhn(init: dict)->bool:
             res += i
 
     res = 10 - res % 10
-    print(res, last)
     if res == last:
         logging.info("Карточка корректна")
         data["luhn_check"] = "true"
     else:
         logging.info("Карточка не корректна")
         data["luhn_check"] = "false"
+    logging.info(f"Результат также сохранен по пути {init['found_card']}")
     try:
         with open(init["found_card"], 'w') as f:
             json.dump(data, f)
