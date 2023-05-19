@@ -20,10 +20,11 @@ def luhn(init: dict)->bool:
     res = 0
     try:
         with open(init["found_card"]) as f:
-            number = str(json.load(f))
+            data = json.load(f)
     except FileNotFoundError:
           logging.error(f"{init['found_card']} not found")
-    
+    number = str(data["card_number"])
+    print(number)
     number = list(map(int, number))
     last = number[15]
     number.pop()
@@ -35,10 +36,18 @@ def luhn(init: dict)->bool:
             res += i
 
     res = 10 - res % 10
+    print(res, last)
     if res == last:
         logging.info("Карточка корректна")
+        data["luhn_check"] = "true"
     else:
         logging.info("Карточка не корректна")
+        data["luhn_check"] = "false"
+    try:
+        with open(init["found_card"], 'w') as f:
+            json.dump(data, f)
+    except FileNotFoundError:
+          logging.error(f"{init['found_card']} not found")
          
 
 
@@ -73,14 +82,18 @@ def searching(init: dict, processes: int):
                         p.terminate()
                         ok = 1
                         logging.info(f'Найденная карта лежит по пути {init["found_card"]}')
+                        data = {}
+                        data["card_number"] = f"{result}"
                         try:
                             with open(init["found_card"], 'w') as f:
-                                    json.dump(result, f)
+                                    json.dump(data, f)
                         except FileNotFoundError:
                             logging.error(f"{init['found_card']} not found")
                         break
             if ok == 1:
                  break
+    if ok == 0:
+        logging.info('Карта не найдена')
             
 def save_stat(init: dict):
     """
@@ -89,15 +102,15 @@ def save_stat(init: dict):
         init(dict): входные данные
     """
     times = []
-    for i in range(mp.cpu_count()):
+    for i in range(int(init["processes_amount"])):
             start = time()
-            logging.info(f'{i+1} процессa\n')
+            logging.info(f'количество процессов: {i+1}\n')
             searching(init, i+1)
             times.append(time()-start)
     fig=plt.figure(figsize=(30, 5))
     plt.ylabel('Время')
     plt.xlabel('процессы')
     plt.title('зависимость времени от кол-ва процессов')
-    plt.plot(list(x+1 for x in range(4)),times, color='#004158') 
+    plt.plot(list(x+1 for x in range(int(init["processes_amount"]))),times, color='#004158') 
     plt.savefig(f'{init["stat_path"]}')
     logging.info(f'Зависимость времени от процессов сохранена по пути {init["stat_path"]}\n')

@@ -29,7 +29,7 @@ if __name__ == '__main__':
     match mode:
         case (True, False, False):
                 logging.info('Поиск номера карточки\n')
-                searching(init, mp.cpu_count())
+                searching(init, int(init["processes_amount"]))
         case (False, True, False):
                 logging.info('Проверка корректности карточки...')
                 luhn(init)
