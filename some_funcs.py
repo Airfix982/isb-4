@@ -87,6 +87,7 @@ def searching(init: dict, processes: int):
                         logging.info(f'Найденная карта лежит по пути {init["found_card"]}')
                         data = {}
                         data["card_number"] = f"{result}"
+                        data["luhn_check"] = "no result"
                         try:
                             with open(init["found_card"], 'w') as f:
                                     json.dump(data, f)
