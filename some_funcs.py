@@ -25,23 +25,27 @@ def luhn(init: dict)->bool:
           logging.error(f"{init['found_card']} not found")
     number = str(data["card_number"])
     number = list(map(int, number))
-    last = number[15]
-    number.pop()
-    for n in number:
-        i = n * 2
-        if i > 9:
-            res += i % 10 + i // 10
-        else:
-            res += i
-
-    res = 10 - res % 10
-    if res == last:
-        logging.info("Карточка корректна")
-        data["luhn_check"] = "true"
+    if len(number) != 16:
+         logging.info("Номер не корректен")
+         data["luhn_check"] = "no result"
     else:
-        logging.info("Карточка не корректна")
-        data["luhn_check"] = "false"
-    logging.info(f"Результат также сохранен по пути {init['found_card']}")
+        last = number[15]
+        number.pop()
+        for n in number:
+            i = n * 2
+            if i > 9:
+                res += i % 10 + i // 10
+            else:
+                res += i
+
+        res = 10 - res % 10
+        if res == last:
+            logging.info("Карточка корректна")
+            data["luhn_check"] = "true"
+        else:
+            logging.info("Карточка не корректна")
+            data["luhn_check"] = "false"
+    logging.info(f"Результат сохранен по пути {init['found_card']}")
     try:
         with open(init["found_card"], 'w') as f:
             json.dump(data, f)
