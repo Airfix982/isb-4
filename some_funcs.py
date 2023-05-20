@@ -65,7 +65,7 @@ def checking_hash(bin: int, init: dict, number: int)->int:
     return:
         (int): номер, если хэш совпал, иначе False
     """
-    return int(f'{bin}{number}{init["last_digits"]}') if hashlib.sha3_256(f'{bin}{number}{init["last_digits"]}'.encode()).hexdigest() == f'{init["hash"]}' else False
+    return int(f'{bin}{number:06d}{init["last_digits"]}') if hashlib.sha3_256(f'{bin}{number:06d}{init["last_digits"]}'.encode()).hexdigest() == f'{init["hash"]}' else False
 
 
 def searching(init: dict, processes: int):
@@ -80,7 +80,7 @@ def searching(init: dict, processes: int):
     with mp.Pool(processes) as p:
         for bin in init['first_digits']:
             logging.info(f'Подбор хэша для карт {bin}XXXXXX{init["last_digits"]}')
-            for result in p.map(partial(checking_hash, int(bin), init), tqdm(range(100000, 1000000), colour='#004158') ):
+            for result in p.map(partial(checking_hash, int(bin), init), tqdm(range(1000000), colour='#004158') ):
                     if result:
                         p.terminate()
                         ok = 1
